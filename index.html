@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0d7a6f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="血脂记录">
+<meta name="application-name" content="血脂记录">
+<meta name="format-detection" content="telephone=no">
+<!-- 添加到主屏 / 桌面时使用的图标（内联，无需外部图片） -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230d7a6f'/%3E%3Cpath d='M32 47c-8-6-13-11-13-17a7 7 0 0 1 13-4 7 7 0 0 1 13 4c0 6-5 11-13 17z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%230d7a6f'/%3E%3Cpath d='M90 132c-22-17-36-30-36-47a19 19 0 0 1 36-11 19 19 0 0 1 36 11c0 17-14 30-36 47z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="mask-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 47c-8-6-13-11-13-17a7 7 0 0 1 13-4 7 7 0 0 1 13 4c0 6-5 11-13 17z' fill='%230d7a6f'/%3E%3C/svg%3E" color="#0d7a6f">
+<title>血脂控制记录</title>
+<script type="application/manifest+json" id="appManifest">
+{
+  "name": "血脂控制记录",
+  "short_name": "血脂记录",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f2f5f4",
+  "theme_color": "#0d7a6f",
+  "icons": [
+    { "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' fill='%230d7a6f'/%3E%3Cpath d='M96 141c-24-18-39-32-39-50a20 20 0 0 1 39-12 20 20 0 0 1 39 12c0 18-15 32-39 50z' fill='%23fff'/%3E%3C/svg%3E",
+      "sizes": "192x192", "type": "image/svg+xml", "purpose": "any maskable" },
+    { "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%230d7a6f'/%3E%3Cpath d='M256 375c-64-48-104-85-104-133a53 53 0 0 1 104-31 53 53 0 0 1 104 31c0 48-40 85-104 133z' fill='%23fff'/%3E%3C/svg%3E",
+      "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
+</script>
+<script>
+// 把内联 manifest 注入为可解析资源（浏览器要求 manifest 指向独立文件）
+(function(){
+  try{
+    var el = document.getElementById('appManifest');
+    if(!el) return;
+    var txt = el.textContent;
+    var url = null;
+    // 首选：Blob URL（Safari / Chrome / Firefox 均支持）
+    if(typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function' && typeof Blob !== 'undefined'){
+      url = URL.createObjectURL(new Blob([txt], {type:'application/manifest+json'}));
+    }
+    // 降级：data URI（部分环境不支持 Blob URL 时仍可解析）
+    if(!url){
+      url = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(txt);
+    }
+    var l = document.createElement('link');
+    l.rel = 'manifest'; l.href = url;
+    document.head.appendChild(l);
+  }catch(e){}
+})();
+</script>
+<style>
+:root{
+  --bg:#f2f5f4;
+  --card:#ffffff;
+  --ink:#10201d;
+  --ink2:#5d6f6b;
+  --ink3:#93a3a0;
+  --line:#e3eae8;
+  --brand:#0d7a6f;
+  --brand-soft:#e6f4f1;
+  --eat:#e07a2f;
+  --eat-soft:#fdf1e5;
+  --move:#1f7ae0;
+  --move-soft:#e8f1fd;
+  --sleep:#6d5ce0;
+  --sleep-soft:#eeeafc;
+  --med:#d94a6a;
+  --med-soft:#fdebee;
+  --ok:#0d7a6f;
+  --bad:#d94a6a;
+  --warn:#c9821a;
+  --r:16px;
+  --sh:0 1px 2px rgba(16,32,29,.05), 0 8px 24px -12px rgba(16,32,29,.14);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--bg); color:var(--ink);
+  font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  padding-bottom:calc(104px + env(safe-area-inset-bottom));
+  overscroll-behavior-y:contain;
+  overflow-x:hidden;
+  max-width:100vw;
+}
+.wrap{max-width:560px;margin:0 auto;padding:0 12px}
+img,canvas,svg{max-width:100%}
+
+/* ---------- header ---------- */
+header{
+  position:sticky;top:0;z-index:30;
+  background:linear-gradient(160deg,#0d7a6f,#0a5f57);
+  color:#fff;padding:calc(10px + env(safe-area-inset-top)) 0 8px;
+  box-shadow:0 4px 20px -10px rgba(13,122,111,.7);
+}
+.hd{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.hd h1{margin:0;font-size:16.5px;font-weight:650;letter-spacing:.3px;line-height:1.25}
+.hd .date{font-size:11.5px;opacity:.82;margin-top:1px}
+.hd-btns{display:flex;gap:7px}
+.iconbtn{
+  width:34px;height:34px;border-radius:11px;border:0;
+  background:rgba(255,255,255,.16);color:#fff;font-size:15px;
+  display:grid;place-items:center;cursor:pointer;
+}
+.iconbtn:active{transform:scale(.94)}
+
+/* ---------- date strip ---------- */
+.dstrip{
+  display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px;
+  scrollbar-width:none;-ms-overflow-style:none;
+  -webkit-overflow-scrolling:touch;
+}
+.dstrip::-webkit-scrollbar{display:none}
+.dchip{
+  flex:0 0 auto;min-width:48px;padding:5px 7px;border-radius:11px;text-align:center;
+  background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.16);
+  cursor:pointer;transition:.15s;
+}
+.dchip .w{font-size:9.5px;opacity:.8;line-height:1.15}
+.dchip .d{font-size:14.5px;font-weight:650;line-height:1.2}
+.dchip .dot{height:4px;width:4px;border-radius:50%;background:#8ff0dd;margin:2px auto 0}
+.dchip.on{background:#fff;color:var(--brand)}
+.dchip.on .w{opacity:.65}
+.dchip.on .dot{background:var(--brand)}
+
+/* ---------- cards ---------- */
+.card{
+  background:var(--card);border-radius:var(--r);padding:13px 12px;margin:10px 0;
+  box-shadow:var(--sh);
+}
+.card-h{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.badge{
+  width:28px;height:28px;border-radius:9px;display:grid;place-items:center;
+  font-size:14px;flex:0 0 auto;
+}
+.card-h h2{margin:0;font-size:15px;font-weight:650;flex:1;min-width:0}
+.card-h .tip{font-size:11px;color:var(--ink3);white-space:nowrap;flex:0 0 auto}
+.b-eat{background:var(--eat-soft);color:var(--eat)}
+.b-move{background:var(--move-soft);color:var(--move)}
+.b-sleep{background:var(--sleep-soft);color:var(--sleep)}
+.b-med{background:var(--med-soft);color:var(--med)}
+.b-lip{background:var(--brand-soft);color:var(--brand)}
+
+/* ---------- rows ---------- */
+.row{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 0;border-top:1px solid var(--line);
+}
+.row:first-of-type{border-top:0}
+.row .lbl{font-size:14px;min-width:62px;color:var(--ink);font-weight:550;flex:0 0 auto}
+.row .lbl small{display:block;font-size:10.5px;color:var(--ink3);font-weight:400}
+.row .sp{flex:1}
+
+/* toggle */
+.tg{
+  width:48px;height:28px;border-radius:14px;background:#dde5e3;position:relative;
+  border:0;padding:0;cursor:pointer;transition:.2s;flex:0 0 auto;
+}
+.tg::after{
+  content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;
+  background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.22);
+}
+.tg.on{background:var(--brand)}
+.tg.on.eat{background:var(--eat)}
+.tg.on.move{background:var(--move)}
+.tg.on.sleep{background:var(--sleep)}
+.tg.on.med{background:var(--med)}
+.tg.on::after{transform:translateX(20px)}
+.tg.on.eat::after,.tg.on.move::after,.tg.on.sleep::after,.tg.on.med::after{transform:translateX(20px)}
+
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{
+  padding:7px 12px;border-radius:11px;font-size:13px;background:#f1f5f4;color:var(--ink2);
+  border:1px solid transparent;cursor:pointer;transition:.15s;font-weight:500;
+}
+.chip.on{background:var(--brand);color:#fff}
+.chip.on.eat{background:var(--eat)}
+.chip.on.move{background:var(--move)}
+.chip.on.sleep{background:var(--sleep)}
+.chip.on.med{background:var(--med)}
+.chip.ghost{background:#fff;border:1px dashed #c6d4d1;color:var(--ink3)}
+
+/* inputs */
+input[type=time],input[type=text],input[type=number],select,textarea{
+  font:15px/1.4 inherit;color:var(--ink);background:#f6f9f8;border:1px solid var(--line);
+  border-radius:11px;padding:8px 10px;outline:none;width:100%;
+  -webkit-appearance:none;appearance:none;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--brand);background:#fff}
+/* iOS Safari 下 date/time 会撑破容器，统一限制 */
+input[type=time],input[type=date]{min-width:0;max-width:100%}
+input[type=number].num{width:58px;min-width:0;text-align:center;font-weight:650;padding:8px 2px;flex:0 0 58px}
+.unit{font-size:11.5px;color:var(--ink3);min-width:20px;flex:0 0 auto}
+textarea{resize:vertical;min-height:44px}
+/* 运动行：左右两侧固定，中间数字区自适应，避免加号被挤出屏幕 */
+.qty{display:flex;align-items:center;gap:4px;flex:0 0 auto;max-width:100%}
+.move-line{display:flex;align-items:center;gap:7px;min-width:0}
+.move-line .mname{font-size:13.5px;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 auto;min-width:0}
+.step{
+  width:28px;height:28px;border-radius:8px;border:1px solid var(--line);background:#f6f9f8;
+  color:var(--ink2);font-size:16px;line-height:1;display:grid;place-items:center;cursor:pointer;
+  flex:0 0 auto;
+}
+.step:active{background:#e9f0ee}
+
+/* water */
+/* 每餐：时间 + 开关 + 吃了什么 */
+.meal{padding:9px 0;border-top:1px solid var(--line)}
+.meal:first-of-type{border-top:0}
+.meal-h{display:flex;align-items:center;gap:6px;margin-bottom:7px;min-width:0}
+.meal-h .lbl{font-size:14px;font-weight:550;flex:0 0 auto;white-space:nowrap;min-width:0}
+.meal-h .sp{flex:1 1 auto;min-width:0}
+.meal-h .tg{flex:0 0 auto}
+.meal-in{font-size:16px;padding:9px 11px;background:#fbf6f1;border-color:#f0e2d4}
+.meal-in.filled{background:#fff9f3;border-color:#e8c9a8;color:var(--ink)}
+.meal-in::placeholder{color:#b8aca1;font-size:13px}
+/* 每餐时间：可自行设定（固定宽度，避免把开关挤出屏幕） */
+.meal-time{
+  width:80px;min-width:0;max-width:80px;flex:0 0 80px;
+  font:600 12px/1 inherit;color:var(--sleep);
+  background:var(--sleep-soft);border:1px solid #dcd3f0;border-radius:9px;
+  padding:6px 3px;text-align:center;cursor:pointer;
+  -webkit-appearance:none;appearance:none;
+}
+.meal-time:focus{border-color:var(--sleep);background:#fff}
+.meal-time::-webkit-calendar-picker-indicator{opacity:.45;margin:0;padding:0}
+.mtip{display:block;font-size:10px;color:var(--ink3);font-weight:400}
+.mtip.set{color:var(--sleep);font-weight:600}
+
+/* 喝水直接输入 */
+.water-line{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.wnum{
+  width:96px;flex:0 0 96px;text-align:center;font-size:20px;font-weight:700;
+  padding:8px 4px;color:var(--move);background:#f4f9fe;border-color:#d3e5f7;
+}
+.wnum:focus{border-color:var(--move);background:#fff}
+.wunit{font-size:13px;color:var(--ink3);font-weight:500;flex:0 0 auto;margin-right:2px}
+.wq{
+  padding:7px 10px;border-radius:10px;border:1px solid #d3e5f7;background:#f4f9fe;
+  color:var(--move);font:600 12.5px/1 inherit;cursor:pointer;flex:0 0 auto;
+}
+.wq:active{background:#e3f0fc}
+.wq.wclear{color:var(--ink3);border-color:var(--line);background:#f6f9f8;margin-left:auto}
+.wbar{height:6px;border-radius:3px;background:#e8efed;overflow:hidden;margin-top:10px}
+.wbar i{display:block;height:100%;border-radius:3px;background:var(--move);transition:width .2s,background .2s}
+
+/* 血脂历史记录条目 */
+.liph{border:1px solid var(--line);border-radius:12px;padding:10px 11px;margin-bottom:8px;background:#fcfdfd}
+.liph-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+.liph-h b{font-size:13px}
+.liph-del{width:24px;height:24px;border-radius:7px;border:0;background:#fdebee;color:var(--med);font-size:13px;cursor:pointer;flex:0 0 auto}
+.liph-v{display:flex;flex-wrap:wrap;gap:5px}
+.lv{font-size:11px;padding:3px 8px;border-radius:8px;background:#eef3f2;color:var(--ink2)}
+.lv b{font-weight:700}
+.lv.ok{background:var(--brand-soft);color:var(--ok)}
+.lv.hi{background:var(--med-soft);color:var(--bad)}
+.lv.lo{background:#fdf3e2;color:var(--warn)}
+.liph-n{font-size:11.5px;color:var(--ink3);margin-top:7px;padding-top:7px;border-top:1px dashed var(--line)}
+
+.water{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:4px}
+.cup{
+  aspect-ratio:1;border-radius:8px;border:1.5px solid #cfe0ed;background:#f7fbfe;
+  cursor:pointer;position:relative;overflow:hidden;transition:.12s;
+}
+.cup.fill{background:linear-gradient(180deg,#6bb6ef,#2196f3);border-color:#2196f3}
+.cup:active{transform:scale(.93)}
+.wtxt{display:flex;justify-content:space-between;align-items:baseline;margin-top:8px;font-size:11.5px;color:var(--ink3)}
+.wtxt b{font-size:15px;color:var(--move)}
+
+/* sleep duration */
+.dur{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:var(--sleep-soft);border-radius:13px;padding:10px;margin-top:10px;
+}
+.dur b{font-size:24px;color:var(--sleep);font-weight:700;letter-spacing:.5px;line-height:1.1}
+.dur span{font-size:11px;color:var(--ink3);margin-top:2px}
+
+/* supplement list */
+.sup{border:1px solid var(--line);border-radius:13px;padding:10px 11px;margin-bottom:8px;background:#fcfdfd}
+.sup-top{display:flex;align-items:center;gap:8px}
+.sup-top input[type=text]{flex:1;font-weight:600;background:#f6f9f8}
+.sup-del{width:28px;height:28px;border-radius:8px;border:0;background:#fdebee;color:var(--med);font-size:15px;cursor:pointer;flex:0 0 auto}
+.sup-bot{display:flex;gap:8px;margin-top:7px;align-items:center}
+.sup-bot input[type=text]{flex:1;font-size:13.5px}
+.sup-bot input[type=time]{width:104px;flex:0 0 auto;font-size:13.5px}
+.addbtn{
+  width:100%;padding:10px;border-radius:12px;border:1px dashed #c6d4d1;background:#fff;
+  color:var(--brand);font-size:13.5px;font-weight:600;cursor:pointer;
+}
+.addbtn:active{background:var(--brand-soft)}
+
+/* lipids */
+.lip-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.lip{
+  border:1px solid var(--line);border-radius:12px;padding:9px 9px 8px;background:#fcfdfd;
+  min-width:0;
+}
+.lip .t{font-size:11.5px;color:var(--ink2);font-weight:600;display:flex;justify-content:space-between;gap:4px;align-items:baseline}
+.lip .t>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lip .t em{font-style:normal;font-size:9.5px;color:var(--ink3)}
+.lip .in{display:flex;align-items:baseline;gap:3px;margin-top:4px}
+.lip .in input{border:0;background:transparent;padding:0;font-size:20px;font-weight:700;width:100%;min-width:0;color:var(--ink)}
+.lip .in input:focus{background:transparent;border:0}
+.lip .u{font-size:11px;color:var(--ink3)}
+.lip .ref{font-size:10px;color:var(--ink3);margin-top:2px;line-height:1.35;overflow-wrap:anywhere}
+/* ApoB / Lp(a) 相关 */
+.sex-row{display:flex;align-items:center;gap:8px;margin:9px 0 10px;flex-wrap:wrap}
+.sex-lbl{font-size:12px;color:var(--ink2);font-weight:600;flex:0 0 auto}
+.sex-row .chips{gap:6px}
+.sex-row .chip{padding:5px 10px;font-size:12px}
+/* 单位：独占一行右侧，不与数字抢宽度 */
+.unit-select{
+  border:0;background:transparent;color:var(--ink3);font:11px/1 inherit;
+  padding:0;text-align:right;cursor:pointer;width:auto;max-width:58px;
+  flex:0 0 auto;-webkit-appearance:none;appearance:none;
+}
+.unit-select:focus{background:transparent;border:0}
+.lip .in .ufix{font-size:11px;color:var(--ink3);flex:0 0 auto}
+/* 六项指标两列紧凑排布 */
+.lip-grid.two-col{grid-template-columns:1fr 1fr}
+.st{font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;white-space:nowrap;flex:0 0 auto}
+.st.ok{background:var(--brand-soft);color:var(--ok)}
+.st.hi{background:var(--med-soft);color:var(--bad)}
+.st.lo{background:#fdf3e2;color:var(--warn)}
+/* 窄屏（小屏安卓/iPhone SE）：血脂卡改单列，参考值不被压断 */
+@media (max-width:359px){
+  .lip-grid,.lip-grid.two-col{grid-template-columns:1fr}
+  .lip .t{font-size:12px}
+  .lip .in input{font-size:22px}
+}
+
+/* ---------- stats ---------- */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:#fafcfb;border:1px solid var(--line);border-radius:13px;padding:11px}
+.stat .n{font-size:21px;font-weight:700;color:var(--brand);line-height:1.15}
+.stat .n small{font-size:11px;font-weight:500;color:var(--ink3);margin-left:2px}
+.stat .k{font-size:11.5px;color:var(--ink3);margin-top:3px}
+.bar{height:6px;border-radius:3px;background:#e8efed;overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;border-radius:3px;background:var(--brand)}
+.bar i.b{background:var(--move)}
+.bar i.s{background:var(--sleep)}
+.bar i.m{background:var(--med)}
+.bar i.e{background:var(--eat)}
+
+.chart{width:100%;height:132px;display:block;margin-top:6px}
+.legend{display:flex;gap:10px;font-size:11px;color:var(--ink3);margin-top:6px;flex-wrap:wrap}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px}
+.legend .lg-note{color:#a8b6b3;font-size:10.5px}
+
+/* trend */
+.tline{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tline::-webkit-scrollbar{display:none}
+.tcol{flex:0 0 auto;width:32px;text-align:center;font-size:10px;color:var(--ink3)}
+.tbar{height:76px;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;margin-top:4px}
+.tbar i{display:block;border-radius:2px}
+.tcol b{display:block;font-size:10.5px;color:var(--ink2);font-weight:600;margin-top:3px}
+
+/* ---------- footer nav ---------- */
+nav{
+  position:fixed;left:0;right:0;bottom:0;z-index:40;
+  background:rgba(255,255,255,.96);backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border-top:1px solid var(--line);
+  padding:5px 0 calc(5px + env(safe-area-inset-bottom));
+  display:flex;justify-content:space-around;
+  max-width:560px;margin:0 auto;
+}
+nav button{
+  flex:1;border:0;background:transparent;color:var(--ink3);cursor:pointer;
+  font-size:10.5px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;
+  font-family:inherit;
+}
+nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--brand);font-weight:650}
+
+/* ---------- views ---------- */
+.view{display:none;animation:fade .18s ease}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* save toast */
+.toast{
+  position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translate(-50%,12px);
+  background:rgba(16,32,29,.9);color:#fff;font-size:13px;padding:9px 16px;border-radius:11px;
+  opacity:0;pointer-events:none;transition:.22s;z-index:60;white-space:nowrap;
+}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+.empty{text-align:center;color:var(--ink3);font-size:13px;padding:22px 10px}
+
+/* history */
+.hitem{border:1px solid var(--line);border-radius:13px;padding:11px 12px;margin-bottom:9px;background:#fcfdfd;cursor:pointer}
+.hitem:active{background:#f6f9f8}
+.hdate{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+.hdate b{font-size:13.5px}
+.hdate span{font-size:11px;color:var(--ink3)}
+.hsum{display:flex;flex-wrap:wrap;gap:5px}
+.pill{font-size:10.5px;padding:3px 8px;border-radius:8px;background:#eef3f2;color:var(--ink2)}
+.pill.e{background:var(--eat-soft);color:var(--eat)}
+.pill.m{background:var(--move-soft);color:var(--move)}
+.pill.s{background:var(--sleep-soft);color:var(--sleep)}
+.pill.d{background:var(--med-soft);color:var(--med)}
+
+/* dialog */
+.mask{position:fixed;inset:0;background:rgba(16,32,29,.42);z-index:70;display:none;align-items:flex-end;justify-content:center}
+.mask.on{display:flex}
+.sheet{
+  background:#fff;width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));
+  max-height:86vh;overflow-y:auto;
+}
+.sheet h3{margin:0 0 12px;font-size:16px}
+.dl{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.dl button{
+  padding:13px 10px;border-radius:13px;border:1px solid var(--line);background:#fafcfb;
+  font:600 13.5px/1.3 inherit;color:var(--ink);cursor:pointer;text-align:left;
+}
+.dl button:active{background:var(--brand-soft)}
+.dl button.wide{grid-column:1/-1;text-align:center;color:var(--bad);background:#fdf5f6;border-color:#f6dfe3}
+.mt{margin-top:14px}
+.sub{font-size:11.5px;color:var(--ink3);margin:-6px 0 10px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="hd">
+      <div>
+        <h1>血脂控制记录</h1>
+        <div class="date" id="hdDate">—</div>
+      </div>
+      <div class="hd-btns">
+        <button class="iconbtn" id="btnToday" title="回到今天">⌂</button>
+        <button class="iconbtn" id="btnMore" title="更多">⋯</button>
+      </div>
+    </div>
+    <div class="dstrip" id="dstrip"></div>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- ============ 记录 ============ -->
+<section class="view on" id="v-record">
+
+  <!-- 吃 -->
+  <div class="card">
+    <div class="card-h">
+      <div class="badge b-eat">🍚</div>
+      <h2>饮食</h2>
+      <div class="tip" id="eatTip">0/4</div>
+    </div>
+
+    <div class="meal" data-meal="breakfast">
+      <div class="meal-h">
+        <div class="lbl">早餐<small class="mtip" data-mtip="breakfast">未记录</small></div>
+        <div class="sp"></div>
+        <input type="time" class="meal-time" data-t="breakfast" value="08:00" aria-label="早餐时间">
+        <button class="tg eat" data-k="eatBreakfast"></button>
+      </div>
+      <input type="text" class="meal-in" data-f="breakfast" placeholder="吃了什么？如：燕麦粥 + 水煮蛋 + 无糖豆浆">
+    </div>
+
+    <div class="meal" data-meal="lunch">
+      <div class="meal-h">
+        <div class="lbl">午餐<small class="mtip" data-mtip="lunch">未记录</small></div>
+        <div class="sp"></div>
+        <input type="time" class="meal-time" data-t="lunch" value="12:30" aria-label="午餐时间">
+        <button class="tg eat" data-k="eatLunch"></button>
+      </div>
+      <input type="text" class="meal-in" data-f="lunch" placeholder="吃了什么？如：杂粮饭 + 清蒸鱼 + 青菜">
+    </div>
+
+    <div class="meal" data-meal="dinner">
+      <div class="meal-h">
+        <div class="lbl">晚餐<small class="mtip" data-mtip="dinner">未记录</small></div>
+        <div class="sp"></div>
+        <input type="time" class="meal-time" data-t="dinner" value="18:30" aria-label="晚餐时间">
+        <button class="tg eat" data-k="eatDinner"></button>
+      </div>
+      <input type="text" class="meal-in" data-f="dinner" placeholder="吃了什么？如：小米粥 + 凉拌木耳 + 鸡胸肉">
+    </div>
+
+    <div class="meal" data-meal="snack">
+      <div class="meal-h">
+        <div class="lbl">加餐<small class="mtip" data-mtip="snack">未记录</small></div>
+        <div class="sp"></div>
+        <input type="time" class="meal-time" data-t="snack" value="15:30" aria-label="加餐时间">
+        <button class="tg eat" data-k="eatSnack"></button>
+      </div>
+      <input type="text" class="meal-in" data-f="snack" placeholder="吃了什么？如：一小把坚果 / 一个苹果">
+    </div>
+
+    <div class="row" style="display:block;padding-top:14px">
+      <div class="lbl" style="min-width:auto;margin-bottom:7px">喝水</div>
+      <div class="water-line">
+        <input type="number" class="wnum" id="waterMl" inputmode="numeric" placeholder="0" min="0" max="10000" step="50">
+        <span class="wunit">ml</span>
+        <button class="wq" data-add="200">+200</button>
+        <button class="wq" data-add="300">+300</button>
+        <button class="wq" data-add="500">+500</button>
+        <button class="wq wclear" data-add="0">清零</button>
+      </div>
+      <div class="wbar"><i id="waterBar"></i></div>
+      <div style="font-size:11px;color:var(--ink3);margin-top:6px" id="waterHint">建议每日 1600-2000 ml</div>
+    </div>
+
+    <div class="row" style="display:block;padding-top:14px">
+      <div class="lbl" style="min-width:auto;margin-bottom:7px">整体备注 <small>如：午餐在外吃，偏油</small></div>
+      <textarea id="eatNote" placeholder="今天的饮食整体情况、有没有踩雷…"></textarea>
+    </div>
+  </div>
+
+  <!-- 动 -->
+  <div class="card">
+    <div class="card-h">
+      <div class="badge b-move">🏃</div>
+      <h2>运动</h2>
+      <div class="tip" id="moveTip">0 分钟</div>
+    </div>
+
+    <div id="moveList"></div>
+
+    <button class="addbtn" id="addMove" style="margin-top:4px">＋ 自定义运动（爬楼 / 椭圆机 / 游泳…）</button>
+    <div style="text-align:right;margin-top:10px;font-size:12px;color:var(--ink3)">
+      合计运动 <b id="moveTotal" style="color:var(--move);font-size:16px">0</b> 分钟
+    </div>
+  </div>
+
+  <!-- 睡 -->
+  <div class="card">
+    <div class="card-h">
+      <div class="badge b-sleep">🌙</div>
+      <h2>睡眠</h2>
+      <div class="tip" id="sleepTip">未记录</div>
+    </div>
+    <div class="row">
+      <div class="lbl">入睡</div>
+      <div class="sp"></div>
+      <input type="time" id="sleepStart" style="width:112px">
+    </div>
+    <div class="row">
+      <div class="lbl">起床</div>
+      <div class="sp"></div>
+      <input type="time" id="sleepEnd" style="width:112px">
+    </div>
+    <div class="dur">
+      <b id="sleepDur">--</b>
+      <span>睡眠时长（自动计算，跨零点正常识别）</span>
+    </div>
+    <div class="row" style="display:block;padding-top:14px">
+      <div class="lbl" style="min-width:auto;margin-bottom:7px">睡眠备注</div>
+      <textarea id="sleepNote" placeholder="打鼾 / 起夜次数 / 是否午睡…"></textarea>
+    </div>
+  </div>
+
+  <!-- 药 & 补充剂 -->
+  <div class="card">
+    <div class="card-h">
+      <div class="badge b-med">💊</div>
+      <h2>用药 · 补充剂</h2>
+      <div class="tip" id="medTip">—</div>
+    </div>
+    <div id="supList"></div>
+    <button class="addbtn" id="addSup">＋ 添加一项</button>
+  </div>
+
+  <!-- 血脂指标已移到独立的「血脂」页 -->
+  <div class="card" style="text-align:center">
+    <div class="card-h" style="margin-bottom:8px">
+      <div class="badge b-lip">🩸</div>
+      <h2>血脂指标</h2>
+    </div>
+    <div style="font-size:12.5px;color:var(--ink3);line-height:1.7">
+      血脂是<strong>定期体检</strong>数据，不需要每天记录<br>
+      已移到下方导航的「<strong style="color:var(--brand)">血脂</strong>」页，拿到报告时记一笔即可
+    </div>
+  </div>
+
+  <div style="text-align:center;font-size:11.5px;color:var(--ink3);padding:4px 0 8px">
+    ✓ 内容自动保存到本机，不联网上传
+  </div>
+</section>
+
+<!-- ============ 血脂（定期体检记录） ============ -->
+<section class="view" id="v-lipid">
+  <div class="card">
+    <div class="card-h">
+      <div class="badge b-lip">🩸</div>
+      <h2>血脂指标</h2>
+      <div class="tip" id="lipTip">按体检报告填写</div>
+    </div>
+    <div class="sub">这是定期体检数据，不必天天填 —— 每次拿到报告就来这里记一笔。</div>
+
+    <div class="sex-row">
+      <span class="sex-lbl">判定参考</span>
+      <div class="chips" id="sexPick">
+        <div class="chip" data-sex="m">♂ 男性</div>
+        <div class="chip" data-sex="f">♀ 女性</div>
+      </div>
+    </div>
+
+    <div class="lip-grid" id="lipGrid"><!-- 由 JS 按 LIPID_META 渲染 --></div>
+
+    <div class="row" style="display:block;padding-top:14px">
+      <div class="lbl" style="min-width:auto;margin-bottom:7px">体检日期 <small>这次报告是哪天做的</small></div>
+      <input type="date" id="lipDate" style="max-width:190px">
+    </div>
+
+    <div class="row" style="display:block;padding-top:14px">
+      <div class="lbl" style="min-width:auto;margin-bottom:7px">备注 <small>如：医院 / 是否空腹 / 医生建议</small></div>
+      <textarea id="lipNote" placeholder="如：市一院，空腹 12h，医生建议继续服药 3 个月后复查"></textarea>
+    </div>
+
+    <button class="addbtn" id="lipSave" style="margin-top:14px;border-style:solid;background:var(--brand);color:#fff;border-color:var(--brand)">
+      ✓ 保存这一次体检记录
+    </button>
+    <div style="font-size:11px;color:var(--ink3);margin-top:9px;line-height:1.6">
+      参考范围按一般成年人「理想水平」，具体目标值请以医生意见为准（合并糖尿病/冠心病等通常要求更低）。<br>
+      <b>ApoB</b> 单位 g/L，按性别判定；<b>Lp(a)</b> 各医院单位不同，可切换 nmol/L 与 mg/L。
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">
+      <div class="badge b-lip">📈</div>
+      <h2>历次趋势</h2>
+      <div class="tip" id="lipHisTip"></div>
+    </div>
+    <canvas class="chart" id="lipChart"></canvas>
+    <div class="legend" id="lipLegend"><!-- JS 渲染 --></div>
+    <div id="lipTable" style="margin-top:12px"></div>
+  </div>
+</section>
+
+<!-- ============ 统计 ============ -->
+<section class="view" id="v-stats">
+  <div class="card">
+    <div class="card-h">
+      <div class="badge b-lip">📈</div>
+      <h2>近 7 天概览</h2>
+      <div class="tip" id="rangeTip"></div>
+    </div>
+    <div class="grid2">
+      <div class="stat">
+        <div class="n" id="sWater">0<small>杯</small></div>
+        <div class="k">日均喝水</div>
+        <div class="bar"><i class="b" id="bWater" style="width:0"></i></div>
+      </div>
+      <div class="stat">
+        <div class="n" id="sMove">0<small>分</small></div>
+        <div class="k">日均运动</div>
+        <div class="bar"><i id="bMove" style="width:0"></i></div>
+      </div>
+      <div class="stat">
+        <div class="n" id="sSleep">0<small>h</small></div>
+        <div class="k">日均睡眠</div>
+        <div class="bar"><i class="s" id="bSleep" style="width:0"></i></div>
+      </div>
+      <div class="stat">
+        <div class="n" id="sStreak">0<small>天</small></div>
+        <div class="k">连续打卡</div>
+        <div class="bar"><i class="e" id="bStreak" style="width:0"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="badge b-lip">📊</div><h2>每日趋势</h2><div class="tip">近 14 天</div></div>
+    <div class="legend">
+      <span><i style="background:var(--move)"></i>运动（分钟）</span>
+      <span><i style="background:var(--sleep)"></i>睡眠（小时×10）</span>
+      <span><i style="background:var(--eat)"></i>喝水（杯×10）</span>
+    </div>
+    <div class="tline" id="trend"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="badge b-lip">🎯</div><h2>达标率</h2><div class="tip">近 7 天</div></div>
+    <div id="goals"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="badge b-lip">📝</div><h2>运动分布</h2><div class="tip">近 7 天</div></div>
+    <div id="moveDist"></div>
+  </div>
+</section>
+
+<!-- ============ 历史 ============ -->
+<section class="view" id="v-history">
+  <div class="card">
+    <div class="card-h"><div class="badge b-lip">🗂</div><h2>历史记录</h2><div class="tip" id="hisCount"></div></div>
+    <div id="hisList"></div>
+  </div>
+</section>
+
+</main>
+
+<nav>
+  <button class="on" data-v="v-record">
+    <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+    记录
+  </button>
+  <button data-v="v-lipid">
+    <svg viewBox="0 0 24 24"><path d="M12 21s7-4.5 7-10a7 7 0 10-14 0c0 5.5 7 10 7 10z"/><circle cx="12" cy="11" r="2.5"/></svg>
+    血脂
+  </button>
+  <button data-v="v-stats">
+    <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l3-4 3 3 4-6"/></svg>
+    统计
+  </button>
+  <button data-v="v-history">
+    <svg viewBox="0 0 24 24"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
+    历史
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<div class="mask" id="mask">
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<script>
+/* =========================================================
+   血脂控制记录 · 单文件本地应用
+   ========================================================= */
+const LS_KEY = 'lipid_tracker_v1';
+const MOVE_PRESET = [
+  {id:'slope', name:'爬坡',   icon:'⛰️', def:0},
+  {id:'walk',  name:'慢走',   icon:'🚶', def:0},
+  {id:'bike',  name:'骑行',   icon:'🚴', def:0}
+];
+const SUP_PRESET = ['他汀','依折麦布','VD','鱼油','辅酶Q10','叶酸'];
+const MEAL_CN = {breakfast:'早餐', lunch:'午餐', dinner:'晚餐', snack:'加餐'};
+const WATER_GOAL = 1600;   // 每日建议下限 ml
+
+/* ---------- 血脂指标配置（新增指标只需改这里） ----------
+   unit       : 默认单位
+   units      : 可选单位列表（存在则表示该指标可切换单位）
+   alt        : 备用单位及换算（值按"换算系数"从主单位得到）
+   range      : {max|min, warnMax|warnMin} 主单位的判定阈值
+   rangeBy    : 'sex' 表示按性别取不同阈值
+   decimals   : 小数位提示
+------------------------------------------------------------ */
+const LIPID_META = [
+  { key:'TC',    cn:'总胆固醇',       en:'TC',   unit:'mmol/L', dec:2,
+    range:{ max:5.2 },                      ref:'理想 < 5.2' },
+  { key:'TG',    cn:'甘油三酯',       en:'TG',   unit:'mmol/L', dec:2,
+    range:{ max:1.7 },                      ref:'理想 < 1.7' },
+  { key:'HDL',   cn:'高密度脂蛋白',   en:'HDL',  unit:'mmol/L', dec:2,
+    range:{ min:1.04 },                     ref:'理想 > 1.04' },
+  { key:'LDL',   cn:'低密度脂蛋白',   en:'LDL',  unit:'mmol/L', dec:2,
+    range:{ max:3.4 },                      ref:'理想 < 3.4' },
+  { key:'ApoB',  cn:'载脂蛋白B',      en:'ApoB', unit:'g/L',    dec:2,
+    rangeBy:'sex',                          ref:'男 < 1.28 / 女 < 1.12' },
+  { key:'LpA',   cn:'脂蛋白a',        en:'Lp(a)', unit:'mg/L', dec:0,
+    units:[
+      { u:'mg/L',   range:{ max:300 } },
+      { u:'nmol/L', range:{ max:75  }, from:'mg/L', factor:2.5 }   // 1 nmol/L ≈ 2.5 mg/L
+    ],
+    ref:'理想 < 300 mg/L' }
+];
+const LIPID_KEYS  = LIPID_META.map(m => m.key);
+const LIPID_BYKEY = Object.fromEntries(LIPID_META.map(m => [m.key, m]));
+/* 图表配色 */
+const LIPID_COLOR = { TC:'#0d7a6f', TG:'#e0a21f', HDL:'#1f7ae0', LDL:'#d94a6a', ApoB:'#7b5ce0', LpA:'#c2410c' };
+
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+
+/* 迁移用的临时容器：必须在 load() 调用之前声明（let 存在暂时性死区） */
+let MIGRATED_LIPIDS = [];
+let DB_lipSeen = {};
+
+let DB = load();
+let cur = todayKey();
+
+/* ---------- 日期工具 ---------- */
+function todayKey(d = new Date()){
+  const x = d.getFullYear();
+  return x + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function keyToDate(k){ const [y,m,d] = k.split('-').map(Number); return new Date(y, m-1, d); }
+function shiftKey(k, n){ const d = keyToDate(k); d.setDate(d.getDate()+n); return todayKey(d); }
+function monthDay(k){ const d = keyToDate(k); return `${d.getMonth()+1}月${d.getDate()}日`; }
+function weekName(k){ return '周' + '日一二三四五六'[keyToDate(k).getDay()]; }
+function diffDays(a, b){ // a 比 b 晚多少天
+  return Math.round((keyToDate(a) - keyToDate(b)) / 86400000);
+}
+function fmtDur(mins){
+  if(mins == null) return '--';
+  if(mins <= 0) return '--';
+  const h = Math.floor(mins/60), m = Math.round(mins%60);
+  if(h === 0) return m + '分';
+  if(m === 0) return h + '小时';
+  return h + '小时' + m + '分';
+}
+
+/* ---------- 数据层 ---------- */
+function blankDay(){
+  return {
+    // 每餐：是否吃了 + 吃了什么 + 时间（时间留空表示未设定，用默认建议时间显示）
+    eat:{
+      breakfast:{done:false, food:'', time:''},
+      lunch:    {done:false, food:'', time:''},
+      dinner:   {done:false, food:'', time:''},
+      snack:    {done:false, food:'', time:''},
+      note:''
+    },
+    water:0,                 // 直接记 ml
+    move:[],                 // [{name, icon, mins}]
+    sleep:{start:'', end:'', note:''},
+    meds:[],                 // 兼容旧结构（已不用）
+    ts:0
+  };
+}
+/* 把旧版数据结构升级到新版，避免老用户数据丢失 */
+function migrateDay(d){
+  if(!d || typeof d !== 'object') return blankDay();
+  const n = blankDay();
+  // eat：旧版是布尔值 {breakfast:true,...}
+  if(d.eat && typeof d.eat === 'object'){
+    ['breakfast','lunch','dinner','snack'].forEach(k=>{
+      const v = d.eat[k];
+      if(v && typeof v === 'object'){ n.eat[k] = {done:!!v.done, food:v.food || '', time:v.time || ''}; }
+      else{ n.eat[k] = {done:!!v, food:'', time:''}; }
+    });
+    n.eat.note = d.eat.note || '';
+  }
+  // water：旧版是"杯数"，按 200ml/杯 折算
+  if(typeof d.water === 'number'){
+    n.water = d.water <= 12 ? d.water * 200 : d.water;   // ≤12 视为杯数
+  }
+  if(Array.isArray(d.move)) n.move = d.move;
+  if(d.sleep) n.sleep = {start:d.sleep.start||'', end:d.sleep.end||'', note:d.sleep.note||''};
+  n.ts = d.ts || 0;
+  // 旧版当天的血脂数据 → 迁移到独立的体检记录列表
+  if(d.lipid && LIPID_KEYS.some(k=> d.lipid[k] !== '' && d.lipid[k] != null)){
+    const key = String(d.__key || '').slice(0,10);
+    if(key && !DB_lipSeen[key]){
+      DB_lipSeen[key] = true;
+      const rec = {date:key, note:'（由每日记录自动迁移）'};
+      LIPID_KEYS.forEach(k=>{ rec[k] = d.lipid[k] || ''; });
+      MIGRATED_LIPIDS.push(rec);
+    }
+  }
+  return n;
+}
+function load(){
+  let migrated = false;
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return {days:{}, lipids:[], meds:defaultMeds(), settings:{}};
+    const d = JSON.parse(raw);
+    d.days = d.days || {};
+    d.meds = d.meds && d.meds.length ? d.meds : defaultMeds();
+    d.settings = d.settings || {};
+
+    // 血脂改为独立列表
+    if(!Array.isArray(d.lipids)){ d.lipids = []; migrated = true; }
+
+    // 逐日规整：旧结构 → 新结构
+    MIGRATED_LIPIDS = []; DB_lipSeen = {};
+    Object.keys(d.days).forEach(k=>{
+      const day = d.days[k];
+      const isNew = day && day.eat && day.eat.breakfast
+                 && typeof day.eat.breakfast === 'object'
+                 && day.sleep && Object.prototype.hasOwnProperty.call(day.sleep, 'note')
+                 && !('quality' in day.sleep) && !('lipid' in day);
+      if(!isNew){
+        day.__key = k;
+        d.days[k] = migrateDay(day);
+        migrated = true;
+      }
+    });
+    if(MIGRATED_LIPIDS.length){
+      const seen = {};
+      d.lipids.forEach(r=> seen[r.date] = true);
+      MIGRATED_LIPIDS.forEach(r=>{ if(!seen[r.date]){ d.lipids.push(r); seen[r.date] = true; } });
+      migrated = true;
+    }
+    d.lipids.sort((a,b)=> (a.date||'').localeCompare(b.date||''));
+    const out = d;
+    // 迁移结果立即落盘，避免每次打开都重算
+    if(migrated){
+      try{ localStorage.setItem(LS_KEY, JSON.stringify(out)); }catch(e){}
+    }
+    return out;
+  }catch(e){
+    return {days:{}, lipids:[], meds:defaultMeds(), settings:{}};
+  }
+}
+function defaultMeds(){
+  return [
+    {name:'他汀', dose:'1 粒', time:'20:00', taken:false},
+    {name:'VD',   dose:'1 粒', time:'08:00', taken:false},
+    {name:'鱼油', dose:'1 粒', time:'08:00', taken:false}
+  ];
+}
+function save(){
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify(DB));
+  }catch(e){
+    toast('保存失败：存储空间不足');
+  }
+}
+/* 用药清单是"每天重复"的：清单存 DB.meds，每天的勾选状态存 day.medTaken */
+function day(k){ return DB.days[k]; }
+function ensureDay(k){
+  if(!DB.days[k]){
+    DB.days[k] = blankDay();
+  }
+  return DB.days[k];
+}
+function ensureToday(){ return ensureDay(cur); }
+
+let saveTimer = null;
+function touch(){
+  const d = DB.days[cur]; if(d) d.ts = Date.now();
+  renderChipsAndTips();                 // 计数即时反馈，不等待防抖
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{ save(); }, 260);
+}
+
+/* ---------- 计算 ---------- */
+function sleepMinutes(d){
+  if(!d.sleep || !d.sleep.start || !d.sleep.end) return null;
+  const [sh,sm] = d.sleep.start.split(':').map(Number);
+  const [eh,em] = d.sleep.end.split(':').map(Number);
+  let mins = (eh*60+em) - (sh*60+sm);
+  if(mins <= 0) mins += 1440;      // 跨零点
+  if(mins > 20*60) mins -= 1440;
+  return mins;
+}
+function moveMinutes(d){ return (d.move||[]).reduce((s,m)=> s + (+m.mins || 0), 0); }
+function eatCount(d){
+  const e = (d && d.eat) || {};
+  return ['breakfast','lunch','dinner','snack'].filter(k=> e[k] && e[k].done).length;
+}
+/* 取某指标在指定单位下的判定阈值（含性别差异） */
+function lipidRangeOf(k, unit, sex){
+  const m = LIPID_BYKEY[k];
+  if(!m) return null;
+  if(m.rangeBy === 'sex'){
+    const isF = sex === 'f';
+    if(k === 'ApoB') return { max: isF ? 1.12 : 1.28, min: isF ? 0.42 : 0.43 };
+    return null;
+  }
+  if(m.units){
+    const hit = m.units.find(x => x.u === unit);
+    if(hit) return hit.range;
+    // 主单位
+    return m.units[0].range;
+  }
+  return m.range || null;
+}
+/* 把用户输入值换算回该指标的"主单位"，便于跨单位比较/绘图 */
+function lipidToBase(k, v, unit){
+  const m = LIPID_BYKEY[k];
+  if(!m || v === '' || v == null) return null;
+  const n = +v; if(isNaN(n)) return null;
+  if(!m.units || !unit || unit === m.units[0].u) return n;
+  const hit = m.units.find(x => x.u === unit);
+  if(hit && hit.factor) return n * hit.factor;
+  return n;
+}
+function lipidStatus(k, v, unit, sex){
+  if(v === '' || v == null) return null;
+  const n = +v; if(isNaN(n)) return null;
+  const m = LIPID_BYKEY[k];
+  let base, r;
+  if(m && m.units){
+    // 可切换单位的指标：统一换算到「主单位」再比较，避免两边单位不一致
+    base = lipidToBase(k, v, unit);
+    r = m.units[0].range;
+  }else{
+    base = n;
+    r = lipidRangeOf(k, unit, sex);
+  }
+  if(!r) return null;
+  // 两侧都判断：有上限看超没超，有下限看够不够
+  if(r.max != null && base >= r.max) return 'hi';
+  if(r.min != null && base <  r.min) return 'lo';
+  return 'ok';
+}
+const ST_TXT = {ok:'达标', hi:'偏高', lo:'偏低'};
+
+/* ---------- 渲染：顶部日期条 ---------- */
+function renderDstrip(){
+  const box = $('#dstrip');
+  box.innerHTML = '';
+  // 展示 今天-6 ~ 今天+1
+  for(let i = -6; i <= 1; i++){
+    const k = shiftKey(todayKey(), i);
+    const d = DB.days[k];
+    const hasData = d && (eatCount(d) || d.water || (d.move||[]).length || sleepMinutes(d));
+    const el = document.createElement('div');
+    el.className = 'dchip' + (k === cur ? ' on' : '');
+    el.innerHTML = `<div class="w">${i===0?'今天':(i===1?'明天':weekName(k))}</div>
+                    <div class="d">${keyToDate(k).getDate()}</div>
+                    <div class="dot" style="${hasData?'':'visibility:hidden'}"></div>`;
+    el.onclick = ()=>{ cur = k; renderAll(); };
+    box.appendChild(el);
+  }
+  const on = box.querySelector('.dchip.on');
+  if(on && typeof on.scrollIntoView === 'function'){
+    try{ on.scrollIntoView({block:'nearest', inline:'center', behavior:'smooth'}); }catch(e){}
+  }
+}
+
+/* ---------- 渲染：表单 ---------- */
+function renderForm(){
+  const d = ensureToday();
+  $('#hdDate').textContent = monthDay(cur) + ' ' + weekName(cur) + (cur === todayKey() ? ' · 今天' : '');
+
+  // 饮食：每餐 时间 + 开关 + 吃了什么
+  const map = {eatBreakfast:'breakfast', eatLunch:'lunch', eatDinner:'dinner', eatSnack:'snack'};
+  const MEAL_DEF = {breakfast:'08:00', lunch:'12:30', dinner:'18:30', snack:'15:30'};
+  $$('#v-record .tg.eat').forEach(btn=>{
+    const k = map[btn.dataset.k];
+    if(!k) return;
+    if(!d.eat[k]) d.eat[k] = {done:false, food:'', time:''};
+    btn.classList.toggle('on', !!d.eat[k].done);
+    btn.onclick = ()=>{
+      d.eat[k].done = !d.eat[k].done;
+      btn.classList.toggle('on', d.eat[k].done);
+      const inp = $(`.meal-in[data-f="${k}"]`);
+      if(inp) inp.classList.toggle('filled', d.eat[k].done);
+      paintMealTip(k);
+      touch();
+    };
+  });
+  // 每餐时间：可自行设定
+  const MEAL_CN2 = {breakfast:'早餐', lunch:'午餐', dinner:'晚餐', snack:'加餐'};
+  function paintMealTip(k){
+    const tip = document.querySelector(`.mtip[data-mtip="${k}"]`);
+    if(!tip) return;
+    const rec = d.eat[k] || {};
+    const t = rec.time || MEAL_DEF[k];
+    tip.textContent = rec.time ? t : '默认 ' + t;
+    tip.classList.toggle('set', !!rec.time);
+  }
+  $$('.meal-time').forEach(inp=>{
+    const k = inp.dataset.t;
+    if(!d.eat[k]) d.eat[k] = {done:false, food:'', time:''};
+    inp.value = d.eat[k].time || MEAL_DEF[k];
+    inp.onchange = ()=>{
+      d.eat[k].time = inp.value || '';
+      // 设了时间即视为这餐吃了
+      if(inp.value && !d.eat[k].done){
+        d.eat[k].done = true;
+        const tg = document.querySelector(`.tg.eat[data-k="eat${k.charAt(0).toUpperCase()+k.slice(1)}"]`);
+        if(tg) tg.classList.add('on');
+        const fi = $(`.meal-in[data-f="${k}"]`);
+        if(fi) fi.classList.add('filled');
+      }
+      paintMealTip(k);
+      touch();
+    };
+  });
+  $$('.meal-in').forEach(inp=>{
+    const k = inp.dataset.f;
+    if(!d.eat[k]) d.eat[k] = {done:false, food:'', time:''};
+    inp.value = d.eat[k].food || '';
+    inp.classList.toggle('filled', !!d.eat[k].done);
+    const tgBtn = document.querySelector(`.tg.eat[data-k="eat${k.charAt(0).toUpperCase()+k.slice(1)}"]`);
+    inp.oninput = ()=>{
+      d.eat[k].food = inp.value;
+      // 只要写了内容就自动视为吃过
+      if(inp.value.trim() && !d.eat[k].done){
+        d.eat[k].done = true;
+        if(tgBtn) tgBtn.classList.add('on');
+        inp.classList.add('filled');
+        paintMealTip(k);
+      }
+      touch();
+    };
+  });
+  ['breakfast','lunch','dinner','snack'].forEach(paintMealTip);
+  $('#eatNote').value = d.eat.note || '';
+
+  // 喝水（直接输入 ml）
+  renderWater(d);
+
+  // 运动
+  renderMove(d);
+
+  // 睡眠
+  $('#sleepStart').value = d.sleep.start || '';
+  $('#sleepEnd').value   = d.sleep.end || '';
+  $('#sleepNote').value  = d.sleep.note || '';
+  $('#sleepDur').textContent = fmtDur(sleepMinutes(d));
+
+  // 用药
+  renderMeds(d);
+
+  renderChipsAndTips();
+}
+
+function renderWater(d){
+  const ml = +d.water || 0;
+  const inp = $('#waterMl');
+  if(inp && document.activeElement !== inp) inp.value = ml ? ml : '';
+  const pct = Math.min(100, Math.round(ml / WATER_GOAL * 100));
+  $('#waterBar').style.width = pct + '%';
+  $('#waterBar').style.background = pct >= 100 ? 'var(--brand)' : 'var(--move)';
+  $('#waterHint').innerHTML = ml
+    ? `建议每日 1600-2000 ml &nbsp;·&nbsp; 已完成 <b style="color:${pct>=100?'var(--brand)':'var(--move)'}">${pct}%</b>`
+    : '建议每日 1600-2000 ml';
+}
+
+function renderMove(d){
+  const box = $('#moveList');
+  box.innerHTML = '';
+  const list = [...MOVE_PRESET, ...(d.move||[]).filter(m=>m.custom)];
+  const used = {};
+  (d.move||[]).forEach(m=>{ used[m.name] = m; });
+
+  list.forEach(item=>{
+    const rec = used[item.name];
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.style.display = 'block';
+    row.innerHTML = `
+      <div class="move-line">
+        <div class="mname">${item.icon||'🏅'} ${item.name}</div>
+        <div class="qty">
+          <button class="step" data-d="-5">−</button>
+          <input class="num" type="number" inputmode="numeric" value="${rec ? (rec.mins||0) : 0}">
+          <span class="unit">分</span>
+          <button class="step" data-d="5">+</button>
+        </div>
+        ${item.custom ? `<button class="sup-del" title="删除">✕</button>` : ''}
+      </div>`;
+    const numEl = row.querySelector('.num');
+    const setMins = v=>{
+      v = Math.max(0, Math.min(600, Math.round(v)));
+      numEl.value = v;
+      let r = (d.move||[]).find(m=>m.name === item.name);
+      if(!r){
+        if(v > 0){ r = {name:item.name, icon:item.icon||'🏅', mins:v, custom:!!item.custom}; d.move.push(r); }
+      }else{
+        r.mins = v;
+        if(v === 0 && parseFloat(numEl.value) === 0) {}
+      }
+      if(v === 0 && r){ d.move = d.move.filter(m=>m !== r); }
+      $('#moveTotal').textContent = moveMinutes(d);
+      $('#moveTip').textContent = moveMinutes(d) + ' 分钟';
+      touch();
+    };
+    row.querySelectorAll('.step').forEach(b=>{
+      b.onclick = ()=> setMins((parseFloat(numEl.value)||0) + (+b.dataset.d));
+    });
+    numEl.oninput = ()=> setMins(parseFloat(numEl.value)||0);
+    if(item.custom){
+      row.querySelector('.sup-del').onclick = ()=>{
+        d.move = (d.move||[]).filter(m=>m.name !== item.name);
+        renderMove(d); touch();
+      };
+    }
+    box.appendChild(row);
+  });
+  $('#moveTotal').textContent = moveMinutes(d);
+}
+
+function renderMeds(d){
+  const box = $('#supList');
+  box.innerHTML = '';
+  const list = DB.meds;
+  if(!list.length){ box.innerHTML = `<div class="empty">还没有添加项目</div>`; }
+  list.forEach((m, i)=>{
+    const taken = !!(d.medTaken && d.medTaken[m.name]);
+    const el = document.createElement('div');
+    el.className = 'sup';
+    el.innerHTML = `
+      <div class="sup-top">
+        <button class="tg med ${taken?'on':''}" style="width:42px;height:25px"></button>
+        <input type="text" value="${esc(m.name)}" placeholder="名称，如 他汀 / VD / 鱼油">
+        <button class="sup-del">✕</button>
+      </div>
+      <div class="sup-bot">
+        <input type="text" value="${esc(m.dose||'')}" placeholder="剂量，如 1 粒">
+        <input type="time" value="${m.time||''}">
+      </div>`;
+    const tg = el.querySelector('.tg');
+    tg.classList.toggle('med', true);
+    if(taken) tg.classList.add('on');
+    tg.onclick = ()=>{
+      d.medTaken = d.medTaken || {};
+      d.medTaken[m.name] = !d.medTaken[m.name];
+      tg.classList.toggle('on', d.medTaken[m.name]);
+      renderChipsAndTips(); touch();
+    };
+    const [nameIn, doseIn] = [el.querySelector('.sup-top input'), el.querySelector('.sup-bot input[type=text]')];
+    const timeIn = el.querySelector('input[type=time]');
+    nameIn.oninput = ()=>{ m.name = nameIn.value; touch(); };
+    doseIn.oninput = ()=>{ m.dose = doseIn.value; touch(); };
+    timeIn.onchange = ()=>{ m.time = timeIn.value; touch(); };
+    el.querySelector('.sup-del').onclick = ()=>{ DB.meds.splice(i,1); renderMeds(d); save(); };
+    box.appendChild(el);
+  });
+  const done = list.filter(m=> d.medTaken && d.medTaken[m.name]).length;
+  $('#medTip').textContent = list.length ? `${done}/${list.length} 已服` : '—';
+}
+
+/* ---------- 血脂：表单动态渲染（新增指标只改 LIPID_META） ---------- */
+function renderLipidGrid(){
+  const grid = $('#lipGrid');
+  if(!grid) return;
+  grid.className = 'lip-grid two-col';
+  grid.innerHTML = LIPID_META.map(m=>{
+    const hasUnits = Array.isArray(m.units) && m.units.length > 1;
+    const unitInner = hasUnits
+      ? `<select class="unit-select" data-unit-for="${m.key}">
+           ${m.units.map(u=>`<option value="${u.u}">${u.u}</option>`).join('')}
+         </select>`
+      : `<span class="ufix">${m.unit}</span>`;
+    return `<div class="lip">
+      <div class="t"><span>${m.cn} <em>${m.en}</em></span><span class="st" data-st="${m.key}"></span></div>
+      <div class="in">
+        <input type="number" inputmode="decimal" step="${m.dec ? '0.'+'0'.repeat(m.dec) : '1'}"
+               id="${m.key}" data-lipid="${m.key}" placeholder="—">
+        ${unitInner}
+      </div>
+      <div class="ref" data-ref="${m.key}">${m.ref}</div>
+    </div>`;
+  }).join('');
+  // 单位切换 + 数值输入实时判定（必须在此绑定：innerHTML 重建后旧引用失效）
+  grid.querySelectorAll('.unit-select').forEach(sel=>{
+    const k = sel.dataset.unitFor;
+    sel.value = lipUnit(k);
+    sel.onchange = ()=>{
+      DB.settings.lipUnits = DB.settings.lipUnits || {};
+      DB.settings.lipUnits[k] = sel.value;
+      save();
+      renderLipidTags(curLipidValues());
+      drawLipChart(); renderLipidHistoryList();
+    };
+  });
+  grid.querySelectorAll('[data-lipid]').forEach(inp=>{
+    inp.oninput = ()=> renderLipidTags(curLipidValues());
+  });
+}
+function lipUnit(k){
+  const m = LIPID_BYKEY[k];
+  if(!m || !m.units) return m ? m.unit : '';
+  return (DB.settings && DB.settings.lipUnits && DB.settings.lipUnits[k]) || m.units[0].u;
+}
+function lipSex(){ return (DB.settings && DB.settings.sex) || 'm'; }
+function renderSexPick(){
+  const box = $('#sexPick');
+  if(!box) return;
+  box.querySelectorAll('.chip').forEach(c=>{
+    c.classList.toggle('on', c.dataset.sex === lipSex());
+    c.onclick = ()=>{
+      DB.settings.sex = c.dataset.sex;
+      save(); renderSexPick(); renderLipidTags(curLipidValues()); renderLipidHistoryList(); drawLipChart();
+    };
+  });
+}
+function renderLipLegend(){
+  const box = $('#lipLegend');
+  if(!box) return;
+  box.innerHTML = LIPID_META.map(m=>
+    `<span><i style="background:${LIPID_COLOR[m.key]}"></i>${m.en}</span>`).join('')
+    + `<span class="lg-note">纵轴 = 该指标 ÷ 参考上限</span>`;
+}
+
+function renderLipidTags(vals){
+  LIPID_META.forEach(m=>{
+    const el = document.querySelector(`.st[data-st="${m.key}"]`);
+    if(!el) return;
+    const st = lipidStatus(m.key, vals && vals[m.key], lipUnit(m.key), lipSex());
+    if(st){ el.className = 'st ' + st; el.textContent = ST_TXT[st]; }
+    else{ el.className = 'st'; el.textContent = ''; }
+    // 动态参考值文案（含单位）
+    const rf = document.querySelector(`[data-ref="${m.key}"]`);
+    if(rf){
+      const r = lipidRangeOf(m.key, lipUnit(m.key), lipSex());
+      const u = lipUnit(m.key);
+      if(r){
+        let txt = '';
+        if(r.max != null && r.min != null) txt = `参考 ${r.min} ~ ${r.max}`;
+        else if(r.max != null) txt = `理想 < ${r.max}`;
+        else if(r.min != null) txt = `理想 > ${r.min}`;
+        rf.textContent = txt + ' ' + u;
+      }else{ rf.textContent = m.ref; }
+    }
+  });
+  // 汇总提示
+  const unit = {}; LIPID_META.forEach(m=> unit[m.key] = lipUnit(m.key));
+  const filled = LIPID_KEYS.filter(k=> vals && vals[k] !== '' && vals[k] != null);
+  const tip = $('#lipTip');
+  if(tip){
+    if(!filled.length){ tip.textContent = '按体检报告填写'; tip.style.color=''; tip.style.fontWeight=''; }
+    else{
+      const bad = filled.filter(k=> lipidStatus(k, vals[k], unit[k], lipSex()) !== 'ok').length;
+      tip.textContent = bad ? `${bad} 项异常` : '全部达标';
+      tip.style.color = bad ? 'var(--bad)' : 'var(--brand)';
+      tip.style.fontWeight = '650';
+    }
+  }
+}
+
+function renderChipsAndTips(){
+  const d = day(cur) || blankDay();
+  $('#eatTip').textContent = eatCount(d) + '/4';
+  $('#moveTip').textContent = moveMinutes(d) + ' 分钟';
+  const sl = sleepMinutes(d);
+  $('#sleepTip').textContent = sl ? fmtDur(sl) : '未记录';
+  const list = DB.meds || [];
+  const done = list.filter(m=> d.medTaken && d.medTaken[m.name]).length;
+  $('#medTip').textContent = list.length ? `${done}/${list.length} 已服` : '—';
+}
+
+/* ---------- 历史 ---------- */
+function renderHistory(){
+  const keys = Object.keys(DB.days).sort().reverse();
+  $('#hisCount').textContent = keys.length ? `${keys.length} 天` : '';
+  const box = $('#hisList');
+  if(!keys.length){ box.innerHTML = `<div class="empty">还没有记录<br><span style="font-size:12px">回到「记录」页开始打卡吧</span></div>`; return; }
+  box.innerHTML = '';
+  keys.forEach(k=>{
+    const d = DB.days[k];
+    const mins = moveMinutes(d), sl = sleepMinutes(d);
+    const moves = (d.move||[]).filter(m=>m.mins>0).map(m=>`<span class="pill m">${m.icon||''}${m.name} ${m.mins}分</span>`).join('');
+    const takenMeds = DB.meds.filter(m=> d.medTaken && d.medTaken[m.name]).map(m=>`<span class="pill d">💊 ${esc(m.name)}</span>`).join('');
+    // 每餐吃了什么（带时间）
+    const MEAL_DEF2 = {breakfast:'08:00', lunch:'12:30', dinner:'18:30', snack:'15:30'};
+    const foods = ['breakfast','lunch','dinner','snack']
+      .filter(x=> d.eat && d.eat[x] && (d.eat[x].food || d.eat[x].time))
+      .map(x=>{
+        const m = d.eat[x];
+        const t = m.time || (m.food ? MEAL_DEF2[x] : '');
+        return `<span class="pill e">${MEAL_CN[x]}${t?' '+t:''}${m.food?'：'+esc(m.food):''}</span>`;
+      }).join('');
+    const el = document.createElement('div');
+    el.className = 'hitem';
+    el.innerHTML = `
+      <div class="hdate">
+        <b>${monthDay(k)} ${weekName(k)}${k===todayKey()?' · 今天':''}</b>
+        <span>${eatCount(d)?'饮食 '+eatCount(d)+'/4':''}${d.water?' · 水 '+d.water+'ml':''}${sl?' · 睡 '+fmtDur(sl):''}</span>
+      </div>
+      <div class="hsum">
+        ${eatCount(d)?'<span class="pill e">🍚 饮食 '+eatCount(d)+'/4</span>':''}
+        ${d.water?'<span class="pill">💧 '+d.water+' ml</span>':''}
+        ${mins?'<span class="pill m">🏃 '+mins+' 分</span>':''}
+        ${sl?'<span class="pill s">🌙 '+fmtDur(sl)+'</span>':''}
+        ${moves}${takenMeds}
+      </div>
+      ${foods ? `<div class="hsum" style="margin-top:6px">${foods}</div>` : ''}
+      ${d.eat && d.eat.note ? `<div style="font-size:11.5px;color:var(--ink3);margin-top:6px">备注：${esc(d.eat.note)}</div>` : ''}`;
+    el.onclick = ()=>{ cur = k; switchView('v-record'); renderAll(); };
+    box.appendChild(el);
+  });
+}
+
+/* ---------- 统计 ---------- */
+function lastDays(n){
+  const arr = [];
+  for(let i = n-1; i >= 0; i--){
+    const k = shiftKey(todayKey(), -i);
+    arr.push({k, d: DB.days[k] || null});
+  }
+  return arr;
+}
+function renderStats(){
+  const days = lastDays(7);
+  const recorded = days.filter(x=>x.d);
+  const n = Math.max(1, recorded.length);
+
+  const waterSum = days.reduce((s,x)=> s + (x.d?.water||0), 0);
+  const moveSum  = days.reduce((s,x)=> s + (x.d ? moveMinutes(x.d) : 0), 0);
+  const sleepArr = days.map(x=> x.d ? sleepMinutes(x.d) : null).filter(v=> v != null);
+  const sleepAvg = sleepArr.length ? sleepArr.reduce((a,b)=>a+b,0)/sleepArr.length : 0;
+
+  $('#sWater').innerHTML = Math.round(waterSum/n) + '<small>ml</small>';
+  $('#sMove').innerHTML  = Math.round(moveSum/n) + '<small>分</small>';
+  $('#sSleep').innerHTML = sleepAvg ? (sleepAvg/60).toFixed(1) + '<small>h</small>' : '0<small>h</small>';
+  $('#bWater').style.width = Math.min(100, (waterSum/n)/WATER_GOAL*100) + '%';
+  $('#bMove').style.width  = Math.min(100, (moveSum/n)/30*100) + '%';
+  $('#bSleep').style.width = Math.min(100, sleepAvg/480*100) + '%';
+  $('#rangeTip').textContent = monthDay(days[0].k) + ' - ' + monthDay(days[days.length-1].k);
+
+  // 连续打卡（从今天/昨天往前）
+  let streak = 0;
+  for(let i = 0; i < 400; i++){
+    const k = shiftKey(todayKey(), -i);
+    const d = DB.days[k];
+    const active = d && (eatCount(d) || d.water || (d.move||[]).length || sleepMinutes(d) || (d.medTaken && Object.values(d.medTaken).some(v=>v)));
+    if(active) streak++;
+    else if(i > 0) break;
+  }
+  $('#sStreak').innerHTML = streak + '<small>天</small>';
+  $('#bStreak').style.width = Math.min(100, streak/30*100) + '%';
+
+  // 趋势柱
+  const t = $('#trend'); t.innerHTML = '';
+  const d14 = lastDays(14);
+  const maxMove = Math.max(30, ...d14.map(x=> x.d ? moveMinutes(x.d) : 0));
+  d14.forEach(x=>{
+    const mv = x.d ? moveMinutes(x.d) : 0;
+    const sl = x.d ? sleepMinutes(x.d) : null;
+    const wa = x.d ? (x.d.water||0) : 0;
+    const col = document.createElement('div');
+    col.className = 'tcol';
+    col.innerHTML = `
+      <div class="tbar">
+        <i style="height:${sl?Math.min(100, sl/600*100)*0.38:0}%;background:var(--sleep)"></i>
+        <i style="height:${wa?Math.min(100, wa/WATER_GOAL*100)*0.38:0}%;background:var(--eat)"></i>
+        <i style="height:${mv?mv/maxMove*100*0.5:0}%;background:var(--move)"></i>
+      </div>
+      <b>${keyToDate(x.k).getDate()}</b>`;
+    t.appendChild(col);
+  });
+
+  // 达标率
+  const goals = [
+    {n:`喝水 ≥ ${WATER_GOAL} ml`, hit: days.filter(x=> x.d && (x.d.water||0) >= WATER_GOAL).length, i:'💧'},
+    {n:'运动 ≥ 30 分钟',   hit: days.filter(x=> x.d && moveMinutes(x.d) >= 30).length, i:'🏃'},
+    {n:'睡眠 ≥ 7 小时',    hit: days.filter(x=> x.d && (sleepMinutes(x.d)||0) >= 420).length, i:'🌙'},
+    {n:'三餐齐全',         hit: days.filter(x=> x.d && x.d.eat && ['breakfast','lunch','dinner'].every(k=>x.d.eat[k] && x.d.eat[k].done)).length, i:'🍚'},
+    {n:'按时吃药/补充剂',  hit: days.filter(x=> x.d && x.d.medTaken && DB.meds.every(m=>x.d.medTaken[m.name])).length, i:'💊'}
+  ];
+  const g = $('#goals'); g.innerHTML = '';
+  goals.forEach(o=>{
+    const pct = Math.round(o.hit/7*100);
+    const el = document.createElement('div');
+    el.style.cssText = 'margin-bottom:11px';
+    el.innerHTML = `
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px">
+        <span>${o.i} ${o.n}</span>
+        <span style="color:var(--ink3)"><b style="color:${pct>=70?'var(--brand)':(pct>=40?'var(--warn)':'var(--bad)')}">${o.hit}/7</b> 天 · ${pct}%</span>
+      </div>
+      <div class="bar" style="margin-top:0"><i style="width:${pct}%;background:${pct>=70?'var(--brand)':(pct>=40?'var(--warn)':'var(--bad)')}"></i></div>`;
+    g.appendChild(el);
+  });
+
+  // 运动分布
+  const dist = {};
+  days.forEach(x=>{ if(!x.d) return; (x.d.move||[]).forEach(m=>{ if(m.mins>0) dist[m.name] = (dist[m.name]||0) + (+m.mins||0); }); });
+  const total = Object.values(dist).reduce((a,b)=>a+b,0);
+  const md = $('#moveDist');
+  if(!total){ md.innerHTML = `<div class="empty">近 7 天还没有运动记录</div>`; }
+  else{
+    md.innerHTML = Object.entries(dist).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px">
+          <span>${k}</span><span style="color:var(--ink3)">${v} 分钟 · ${Math.round(v/total*100)}%</span>
+        </div>
+        <div class="bar" style="margin-top:0"><i class="b" style="width:${Math.round(v/total*100)}%"></i></div>
+      </div>`).join('');
+  }
+
+  // 血脂图表改为在「血脂」页渲染
+}
+
+/* ---------- 血脂（定期体检） ---------- */
+/* 每次体检一条记录：{date, TC, TG, HDL, LDL, ApoB, LpA, note} */
+function curLipidValues(){
+  const v = {};
+  LIPID_KEYS.forEach(k=>{
+    const el = document.querySelector(`[data-lipid="${k}"]`);
+    v[k] = el ? el.value : '';
+  });
+  return v;
+}
+function renderLipidForm(){
+  // 默认带入最近一次体检的日期为今天
+  const dt = $('#lipDate');
+  if(dt && !dt.value) dt.value = todayKey();
+  renderLipidGrid();
+  renderSexPick();
+  renderLipLegend();
+  renderLipidTags(curLipidValues());
+  const tip = $('#lipHisTip');
+  if(tip) tip.textContent = DB.lipids.length ? `${DB.lipids.length} 次记录` : '';
+}
+function saveLipid(){
+  const v = curLipidValues();
+  const filled = LIPID_KEYS.filter(k=> v[k] !== '' && v[k] != null);
+  if(!filled.length){ toast('至少填一项指标'); return; }
+  const date = ($('#lipDate').value || todayKey());
+  const note = ($('#lipNote').value || '').trim();
+  const rec = {date, note};
+  LIPID_KEYS.forEach(k=>{ rec[k] = v[k] === '' || v[k] == null ? '' : v[k]; });
+  // 同一天视为更新，不同天则新增
+  const i = DB.lipids.findIndex(r=> r.date === date);
+  if(i >= 0){ DB.lipids[i] = rec; toast('已更新 ' + monthDay(date) + ' 的记录'); }
+  else{ DB.lipids.push(rec); DB.lipids.sort((a,b)=> (a.date||'').localeCompare(b.date||'')); toast('已保存 ' + monthDay(date) + ' 的记录'); }
+  // 清空输入，避免重复录入
+  LIPID_KEYS.forEach(k=>{ const e = document.querySelector(`[data-lipid="${k}"]`); if(e) e.value = ''; });
+  const nl = $('#lipNote'); if(nl) nl.value = '';
+  save();
+  renderLipidTags({});
+  drawLipChart();
+  renderLipidHistoryList();
+  renderLipidForm();
+}
+function renderLipidHistoryList(){
+  const box = $('#lipTable');
+  if(!box) return;
+  const recs = DB.lipids.slice().reverse();
+  if(!recs.length){
+    box.innerHTML = `<div class="empty">还没有体检记录<br><span style="font-size:12px">填好上方数值后点「保存这一次体检记录」</span></div>`;
+    return;
+  }
+  box.innerHTML = recs.map((r, ri)=>{
+    const idx = DB.lipids.length - 1 - ri;
+    return `<div class="liph">
+      <div class="liph-h">
+        <b>${monthDay(r.date)} ${keyToDate(r.date).getFullYear()}</b>
+        <button class="liph-del" data-i="${idx}" title="删除">✕</button>
+      </div>
+      <div class="liph-v">
+        ${LIPID_META.map(m=>{
+          const v = r[m.key];
+          if(v === '' || v == null) return '';
+          const u = lipUnit(m.key);
+          const st = lipidStatus(m.key, v, u, lipSex());
+          return `<span class="lv ${st||''}">${m.en} <b>${v}</b><em>${u}</em></span>`;
+        }).join('') || '<span style="font-size:11.5px;color:var(--ink3)">（无指标）</span>'}
+      </div>
+      ${r.note ? `<div class="liph-n">${esc(r.note)}</div>` : ''}
+    </div>`;
+  }).join('');
+  box.querySelectorAll('.liph-del').forEach(b=>{
+    b.onclick = ()=>{
+      const i = +b.dataset.i;
+      if(!confirm('删除 ' + monthDay(DB.lipids[i].date) + ' 的这条体检记录？')) return;
+      DB.lipids.splice(i,1);
+      save(); drawLipChart(); renderLipidHistoryList(); renderLipidForm();
+      toast('已删除');
+    };
+  });
+}
+
+function drawLipChart(){
+  /* 指标数量级差异极大（ApoB ~1 g/L、Lp(a) ~300 mg/L、其余 ~5 mmol/L），
+     直接同轴作图会让小数值曲线贴地。这里统一换算为
+     「相当于参考上限的倍数」= 值 / 该指标参考上限，再同轴绘制。 */
+  const series = LIPID_META.map(m=>({
+    k: m.key,
+    c: LIPID_COLOR[m.key] || '#888',
+    en: m.en
+  }));
+  const recs = DB.lipids.slice(-12);
+  const canvas = $('#lipChart');
+  if(!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.clientWidth || 320, H = 132;
+
+  /* 先把每条记录换算成「参考上限倍数」，顺便算出参考线位置 */
+  const norm = recs.map(r=>{
+    const o = {};
+    LIPID_KEYS.forEach(k=>{
+      const v = r[k];
+      if(v === '' || v == null){ o[k] = null; return; }
+      const rr = lipidRangeOf(k, lipUnit(k), lipSex());
+      const denom = (rr && rr.max != null) ? rr.max
+                  : (rr && rr.min != null && rr.min > 0) ? rr.min
+                  : null;
+      const base = lipidToBase(k, v, lipUnit(k));
+      o[k] = (denom && base != null) ? base / denom : null;
+    });
+    return o;
+  });
+
+  canvas.width = W*dpr; canvas.height = H*dpr;
+  const g = canvas.getContext && canvas.getContext('2d');
+  if(!g || typeof g.setTransform !== 'function') return;
+  g.setTransform(dpr,0,0,dpr,0,0);
+  g.clearRect(0,0,W,H);
+
+  if(recs.length < 1){
+    g.fillStyle = '#93a3a0'; g.font = '12px -apple-system,sans-serif'; g.textAlign = 'center';
+    g.fillText('还没有体检记录', W/2, H/2);
+    return;
+  }
+
+  const all = [];
+  norm.forEach(o=> LIPID_KEYS.forEach(k=>{ if(o[k] != null) all.push(o[k]); }));
+  if(!all.length){
+    g.fillStyle = '#93a3a0'; g.font = '12px -apple-system,sans-serif'; g.textAlign = 'center';
+    g.fillText('记录里还没有指标', W/2, H/2);
+    return;
+  }
+  const maxV = Math.max(...all, 1.6) * 1.12, minV = 0;
+  const pad = {l:8, r:8, t:10, b:18};
+  const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
+  const X = i => pad.l + (recs.length === 1 ? iw/2 : iw/(recs.length-1)*i);
+  const Y = v => pad.t + ih - (v - minV)/(maxV - minV)*ih;
+
+  // grid
+  g.strokeStyle = '#eaf0ee'; g.lineWidth = 1;
+  for(let i=0;i<=3;i++){
+    const y = pad.t + ih/3*i;
+    g.beginPath(); g.moveTo(pad.l,y); g.lineTo(W-pad.r,y); g.stroke();
+  }
+
+  // 参考线：1.0 = 参考上限（达标线）
+  if(Y(1) >= pad.t && Y(1) <= pad.t + ih){
+    g.save();
+    g.strokeStyle = '#c9d8d4'; g.lineWidth = 1; g.setLineDash([4,3]);
+    g.beginPath(); g.moveTo(pad.l, Y(1)); g.lineTo(W-pad.r, Y(1)); g.stroke();
+    g.restore();
+    g.fillStyle = '#a8b6b3'; g.font = '9px -apple-system,sans-serif'; g.textAlign = 'left';
+    g.fillText('达标线', pad.l + 1, Y(1) - 3);
+  }
+
+  // 曲线：线宽统一 1.6 保持轻盈（6 条线同屏时更清爽）
+  series.forEach(s=>{
+    const vs = norm.map(o=> o[s.k]);
+    let has = false;
+    g.strokeStyle = s.c; g.lineWidth = 1.6; g.lineJoin = 'round'; g.beginPath();
+    let started = false;
+    vs.forEach((v,i)=>{
+      if(v == null){ started = false; return; }
+      has = true;
+      if(!started){ g.moveTo(X(i), Y(v)); started = true; }
+      else g.lineTo(X(i), Y(v));
+    });
+    g.stroke();
+    if(!has) return;
+    g.fillStyle = s.c;
+    vs.forEach((v,i)=>{ if(v == null) return; g.beginPath(); g.arc(X(i), Y(v), 2.4, 0, 7); g.fill(); });
+  });
+
+  // x labels (约 4 个)
+  g.fillStyle = '#93a3a0'; g.font = '10px -apple-system,sans-serif'; g.textAlign = 'center';
+  const step = Math.max(1, Math.ceil(recs.length/4));
+  recs.forEach((r,i)=>{
+    if(i % step === 0 || i === recs.length-1){
+      const d = keyToDate(r.date);
+      g.fillText(`${d.getMonth()+1}/${d.getDate()}`, X(i), H-5);
+    }
+  });
+}
+
+/* ---------- 视图切换 ---------- */
+function switchView(v){
+  $$('.view').forEach(s=> s.classList.toggle('on', s.id === v));
+  $$('nav button').forEach(b=> b.classList.toggle('on', b.dataset.v === v));
+  if(v === 'v-stats'){ renderStats(); }
+  if(v === 'v-history'){ renderHistory(); }
+  if(v === 'v-lipid'){ renderLipidForm(); drawLipChart(); renderLipidHistoryList(); }
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ---------- 事件绑定 ---------- */
+/* 注意：饮食开关 / 每餐输入框的事件都在 renderForm() 内绑定，
+   因为那里才持有当前选中日期的数据对象（d）。
+   本函数只负责那些「不随日期变化」的控件。 */
+function bind(){
+  // 每餐「吃了什么」的事件在 renderForm() 中绑定（那里才有当天数据）
+
+  $('#eatNote').oninput = e=>{ ensureToday().eat.note = e.target.value; touch(); };
+
+  // 喝水：直接输入 ml
+  const wInp = $('#waterMl');
+  wInp.oninput = ()=>{
+    const d = ensureToday();
+    let v = parseInt(wInp.value, 10);
+    if(isNaN(v) || v < 0) v = 0;
+    if(v > 10000) v = 10000;
+    d.water = v;
+    renderWater(d);
+    touch();
+  };
+  wInp.onblur = ()=>{
+    const d = ensureToday();
+    wInp.value = d.water ? d.water : '';
+    renderWater(d);
+  };
+  $$('.wq').forEach(b=>{
+    b.onclick = ()=>{
+      const d = ensureToday();
+      const add = +b.dataset.add;
+      d.water = add === 0 ? 0 : Math.min(10000, (+d.water || 0) + add);
+      renderWater(d); touch();
+    };
+  });
+
+  $('#sleepStart').onchange = e=>{ ensureToday().sleep.start = e.target.value; $('#sleepDur').textContent = fmtDur(sleepMinutes(ensureToday())); touch(); };
+  $('#sleepEnd').onchange   = e=>{ ensureToday().sleep.end   = e.target.value; $('#sleepDur').textContent = fmtDur(sleepMinutes(ensureToday())); touch(); };
+  $('#sleepNote').oninput   = e=>{ ensureToday().sleep.note = e.target.value; touch(); };
+
+  // 血脂数值输入的实时判定在 renderLipidGrid() 中绑定（该函数会重建 DOM）
+  const lsBtn = $('#lipSave');
+  if(lsBtn) lsBtn.onclick = saveLipid;
+
+  // 自定义运动
+  $('#addMove').onclick = ()=>{
+    const name = prompt('请输入运动名称（如：爬楼、椭圆机、游泳、力量训练）');
+    if(!name || !name.trim()) return;
+    const n = name.trim();
+    const d = ensureToday();
+    if(!d.move.find(m=>m.name === n)) d.move.push({name:n, icon:'🏅', mins:0, custom:true});
+    renderMove(d); touch();
+  };
+
+  // 添加用药
+  $('#addSup').onclick = ()=>{
+    openSheet(`
+      <h3>添加用药 / 补充剂</h3>
+      <div class="sub">常用项点一下即可，也可以自己填</div>
+      <div class="chips" id="supPreset">
+        ${SUP_PRESET.map(s=>`<div class="chip med" data-v="${s}">${s}</div>`).join('')}
+      </div>
+      <div class="mt"><input type="text" id="supCustom" placeholder="自定义名称，如 维生素B12"></div>
+      <button class="addbtn mt" id="supOk" style="border-style:solid;background:var(--brand);color:#fff;border-color:var(--brand)">确认添加</button>
+    `);
+    const sheet = $('#sheet');
+    const custom = sheet.querySelector('#supCustom');
+    const okBtn  = sheet.querySelector('#supOk');
+    const chips  = Array.from(sheet.querySelectorAll('#supPreset .chip'));
+    let picked = '';
+    chips.forEach(c=>{
+      c.onclick = ()=>{
+        picked = (picked === c.dataset.v) ? '' : c.dataset.v;
+        chips.forEach(x=>x.classList.toggle('on', picked === x.dataset.v));
+        custom.value = picked;
+      };
+    });
+    if(okBtn) okBtn.onclick = ()=>{
+      const n = (custom.value || '').trim();
+      if(!n){ toast('请先填写名称'); return; }
+      if(DB.meds.some(m=>m.name === n)){ toast('已经有这一项了'); return; }
+      DB.meds.push({name:n, dose:'', time:'', taken:false});
+      save(); closeSheet(); renderMeds(ensureToday());
+      toast('已添加：' + n);
+    };
+  };
+
+  $('#btnToday').onclick = ()=>{ cur = todayKey(); renderAll(); toast('回到今天'); };
+
+  $('#btnMore').onclick = ()=>{
+    openSheet(`
+      <h3>设置与数据</h3>
+      <div class="sub">数据仅保存在本机浏览器，不上传服务器</div>
+      <div class="dl">
+        <button id="mExport">⬇️ 导出备份<small style="display:block;color:var(--ink3);font-weight:400">JSON 文件，可换机恢复</small></button>
+        <button id="mImport">⬆️ 导入恢复<small style="display:block;color:var(--ink3);font-weight:400">选择之前导出的文件</small></button>
+        <button class="wide" id="mClear">🗑 清空全部数据</button>
+      </div>
+      <div style="font-size:11px;color:var(--ink3);margin-top:14px;line-height:1.7">
+        提示：iOS 可「添加到主屏幕」当 App 用；安卓 Chrome 菜单里选「添加到主屏幕」。<br>
+        统计里的目标线（水 8 杯 / 运动 30 分 / 睡眠 7 小时）为通用建议，可自行调整习惯。
+      </div>
+    `);
+    const sheet = $('#sheet');
+    const ex = sheet.querySelector('#mExport');
+    const im = sheet.querySelector('#mImport');
+    const cl = sheet.querySelector('#mClear');
+    if(ex) ex.onclick = ()=>{
+      const blob = new Blob([JSON.stringify(DB, null, 2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = '血脂记录备份_' + todayKey() + '.json';
+      a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+      toast('已导出备份文件');
+    };
+    if(im) im.onclick = ()=>{
+      const inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = '.json,application/json';
+      inp.onchange = ()=>{
+        const f = inp.files[0]; if(!f) return;
+        const r = new FileReader();
+        r.onload = ()=>{
+          try{
+            const d = JSON.parse(r.result);
+            if(!d.days) throw 0;
+            const raw = d;
+            // 走一遍 load 的规范化逻辑
+            localStorage.setItem(LS_KEY, JSON.stringify(raw));
+            DB = load();
+            save(); closeSheet(); renderAll(); toast('导入成功');
+          }catch(e){ toast('文件格式不对'); }
+        };
+        r.readAsText(f);
+      };
+      inp.click();
+    };
+    if(cl) cl.onclick = ()=>{
+      if(confirm('确定清空全部记录？此操作不可恢复，建议先导出备份。')){
+        localStorage.removeItem(LS_KEY);
+        DB = {days:{}, lipids:[], meds:defaultMeds(), settings:{}};
+        cur = todayKey(); closeSheet(); renderAll(); toast('已清空');
+      }
+    };
+  };
+
+  $$('nav button').forEach(b=> b.onclick = ()=> switchView(b.dataset.v));
+
+  $('#mask').onclick = e=>{ if(e.target.id === 'mask') closeSheet(); };
+}
+
+function openSheet(html){ $('#sheet').innerHTML = html; $('#mask').classList.add('on'); }
+function closeSheet(){ $('#mask').classList.remove('on'); $('#sheet').innerHTML = ''; }
+
+let toastTimer;
+function toast(msg){
+  const t = $('#toast');
+  t.textContent = msg; t.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove('on'), 1700);
+}
+function esc(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ---------- 启动 ---------- */
+function renderAll(){
+  renderDstrip();
+  renderForm();
+  // 若当前停在血脂页，一并刷新
+  if($('#v-lipid').classList.contains('on')){ renderLipidForm(); drawLipChart(); renderLipidHistoryList(); }
+}
+
+bind();
+renderAll();
+window.addEventListener('resize', ()=>{ if($('#v-lipid').classList.contains('on')) drawLipChart(); });
+window.addEventListener('beforeunload', ()=>{ clearTimeout(saveTimer); save(); });
+</script>
+</body>
+</html>
